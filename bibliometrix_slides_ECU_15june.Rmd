@@ -1,0 +1,237 @@
+---
+title: "Systematic Reviews using R"
+author: "Abhay Singh"
+date: "15/06/2022"
+output:
+  ioslides_presentation:
+    css: slide_css.css
+    logo: logo.png
+    smaller: yes
+    widescreen: true
+    autosize: true
+    self_contained: true
+  rmdshower::shower_presentation:
+    self_contained: true
+    katex: true
+    ratio: 16x10
+    css: slide_css.css
+    logo: logo.png
+  slidy_presentation:
+    logo: logo.png
+  beamer_presentation: default
+address: Macquarie University
+bibliography: ajm_review_syst.bib
+#widescreen: yes
+#autosize: yes
+logo: logo.png
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
+```
+<img src="logo2.gif" height="100" width="100" style="position:absolute;top:10px;right:0px;" />
+
+# What is R?
+
+## According to the official webpage:
+
+- R is a language and environment for statistical computing and graphics. It is a GNU project which is similar to the S language and environment which was developed at Bell Laboratories (formerly AT&T, now Lucent Technologies) by John Chambers and colleagues. R can be considered as a different implementation of S. There are some important differences, but much code written for S runs unaltered under R.http://www.r-project.org/about.html
+
+## According to Wikipedia
+
+- R is a free software programming language and a software environment for statistical computing and graphics. The R language is widely used among statisticians and data miners for developing statistical software and data analysis. Polls and surveys of data miners are showing R's popularity has increased substantially in recent years.
+
+
+
+## To Summarise
+
+- R (R Core Team, 2020), is a highly capable statistical programming language which has gained immense popularity among researchers, data analysts and in analytical professions around the globe.
+
+- R provides a flexible and extensible free environment to conduct research and analysis and also contribute in the form of open source routines and packages which promotes reproducibility.
+
+- R is the most amazing free statistical software ever!
+
+- This recent video by Revolution Analytics does a great job in summarizing R 
+
+****** 
+
+<iframe width="360" height="215" src="https://www.youtube.com/embed/ZCQHm63xc4s" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<!-- ## Slide with Bullets -->
+
+<!-- - Bullet 1 -->
+<!-- - Bullet 2 -->
+<!-- - Bullet 3 -->
+
+<!-- ## Slide with R Output -->
+
+<!-- ```{r cars, echo = TRUE} -->
+<!-- summary(cars) -->
+<!-- ``` -->
+
+<!-- ## Slide with Plot -->
+
+<!-- ```{r pressure} -->
+<!-- plot(pressure) -->
+<!-- ``` -->
+
+# Systematic Reviews using R
+
+## Brief Introduction
+
+- R's package ecosystem is one of its major advantages, there are packages available for most widely used statistical and data analysis & visualisation techniques used several packages added almost daily on new and upcoming methods published by academic researchers or industry practitioners.
+
+- R provide packages for various areas of interest (see https://cran.r-project.org/web/views/ for a list of task views grouping packages according to their functionality ) including systematic literature review or the related field of meta analysis.
+
+- Bibliometrix (@Aria2017), Revtools (@Westgate2018) and Litsearchr (@Grames2019,@Grames2019a) of the Metaverse (https://rmetaverse.github.io/) project, Adjutant (@crisan2018adjutant), Metagear (@Lajeunesse2016)) are a few providing various functionality.
+
+******
+
+- Bibliometrix is by far the most popular with several publications using the package
+- The package webpage (http://www.bibliometrix.org) provides further information and examples on its functionality.
+
+• We use the bibliometrix package for this example.
+
+
+
+## Demonstration using R
+
+
+# Main Results
+
+## Descriptive Analysis {.smaller}
+
+
+- Using the inbuild data in the package (for reproducibility)
+  + Manuscripts including the term "bibliometrics" in the title.
+  + Period: 1975 - 2017
+  + Database: SCOPUS
+  + Format: bibtex
+
+```{r,eval=TRUE,echo=FALSE}
+library(bibliometrix) #load the package
+library(pander)#other required packages
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(bibliometrixData)
+
+data("scopusCollection")
+file1=data("scopusCollection")
+#M=convert2df(file="insert filename",format="bibtex",dbsource = "scopus")#convert the data to data frame
+```
+
+```{r,size='tiny',results='hide'}
+#Descriptive analysis 
+M=scopusCollection #just to reuse the other code
+res1=biblioAnalysis(M, sep=";")
+s1=summary(res1,k=10,pause=FALSE,verbose=FALSE)
+
+d1=s1$MainInformationDF #main information 
+d2=s1$MostProdAuthors #Most productive Authors 
+d3=s1$MostCitedPapers #most cited papers 
+pander(d1,caption="Summary Information",table.split=Inf) 
+```
+
+
+## Productive Authors
+
+```{r}
+pander(d2,caption="Most Productive Authors",table.split=Inf) 
+
+```
+
+
+## Most cited papers
+
+```{r}
+pander(d3,caption="Most Cited Papers") 
+
+```
+
+## Summary Plot-1 (Most Porductive Authors)
+
+
+```{r,eval=TRUE,results="hide",fig.show="hide"}
+p1=plot(res1,pause=FALSE)
+```
+
+```{r,fig.width=4,fig.height=4}
+library(ggplot2)
+theme_set(theme_bw())
+
+
+p1[[1]]+theme_bw()+scale_x_discrete(limits =rev(levels(as.factor(p1[[1]]$data$AU))))
+```
+
+## Summary Plot-2 (Most Productive Countries)
+
+```{r}
+p1[[2]]
+```
+
+## Summary Plot-3 (Annual Scientific Production)
+
+```{r}
+p1[[3]]
+```
+
+## Summary Plot-4 (Average Article Citation)
+
+```{r}
+p1[[4]]
+```
+
+## Top Authors Over time
+
+
+```{r, fig.width=10}
+topAU=authorProdOverTime(M,k=10,graph=TRUE)
+
+```
+
+## Network Plots
+* The package also facilitates various network analysis like, co-citation analysis, coupling analysis, collaboration analysis or co-occurrence analysis. Figure-2 shows a key word co-occurrence plot
+```{r,fig.cap='Country Collaboration',fig.height=5,fig.width=5}
+
+M <- metaTagExtraction(M, Field = "AU_CO", sep = ";") 
+NetMatrix <- biblioNetwork(M, analysis = "collaboration", network = "countries", sep = ";")
+# Plot the network 
+net=networkPlot(NetMatrix, n = dim(NetMatrix)[1], Title = "Country Collaboration", type = "circle", size=TRUE, remove.multiple=FALSE,labelsize=0.7,cluster="none")
+```
+
+
+## Co-word Analysis
+
+* Analysis of the conceptual structure among the articles analysed. 
+* Bibliomentrix can conduct a co-word analysis to map the conceptual structure of a framework using the word co-occurrences in a bibliographic database. 
+* The analysis in the figure is conducted using the Correspondence Analysis and K-Means clustering using Author's keywords. This analysis includes Natural Language Processing and is conducted without stemming.
+
+****** 
+
+```{r, fig.cap='Conceptual Structure',fig.width=8,fig.height=7}
+library(gridExtra)
+CS=conceptualStructure(M,field="DE", method="CA", minDegree=4, clust=5, stemming=FALSE, labelsize=10, documents=10,graph=FALSE) 
+
+grid.arrange(CS[[4]],CS[[5]],CS[[6]],CS[[7]],ncol=2,nrow=2)
+
+```
+
+## Author collaboration network
+
+```{r,fig.width=8,fig.height=6}
+NetMatrix <- biblioNetwork(M, analysis = "collaboration",  network = "authors", sep = ";")
+net=networkPlot(NetMatrix,  n = 20, Title = "Author collaboration",type = "auto", size=10,size.cex=T,edgesize = 3,labelsize=0.6)
+```
+
+
+## There is a gui too!
+
+
+```{r,eval=FALSE,echo=TRUE}
+biblioshiny()
+```
+
+
+# References
+******
